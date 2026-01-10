@@ -6,19 +6,42 @@
 //
 
 import SwiftUI
+import Supabase
 
 struct ContentView: View {
+    @StateObject private var catalogVM = CatalogViewModel()
+    @State private var searchText: String = ""
+    
+    
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        TabView{
+            Tab("Catalog", systemImage: "books.vertical"){
+                CatalogView()
+                    .environmentObject(catalogVM)
+                    
+            }
+            Tab("Loans", systemImage: "book.badge.plus"){
+                LoansView(vm: catalogVM)
+            }
+//            Tab(role: .search){
+//                CatalogView()
+//                    .searchable(
+//                    text: $searchText,
+//                    placement: .navigationBarDrawer(displayMode: .always),
+//                    prompt: "Cari Buku"
+//                    )
+//            }
         }
-        .padding()
+        .environmentObject(catalogVM)
+        .task {
+            do{
+                try await catalogVM.fetchBooks()
+                try await catalogVM.fetchKategori()
+                try await catalogVM.fetchViewPeminjaman()
+                try await catalogVM.fetchAnggota()
+            }catch{
+                print(error)
+            }
+        }
     }
-}
-
-#Preview {
-    ContentView()
 }
