@@ -1,4 +1,9 @@
+/// Tampilan modal untuk membuat peminjaman buku.
+///
+/// Pengguna memilih anggota dan buku, lalu menekan tombol ceklis untuk
+/// menyimpan peminjaman dan mengurangi stok buku.
 //
+
 //  LoanModalView.swift
 //  LSP
 //
@@ -7,14 +12,23 @@
 
 import SwiftUI
 
+/// Form peminjaman: pilih anggota dan buku, lalu simpan peminjaman.
 struct LoanModalView: View {
+    /// ViewModel yang menyediakan data anggota & buku serta aksi peminjaman.
     @EnvironmentObject var vm: LoanViewModel
+    /// Untuk menutup modal setelah peminjaman berhasil.
     @Environment(\.dismiss) var dismiss
+    /// ID buku yang dipilih.
     @State private var selectedBookID: String = ""
+    /// ID anggota yang dipilih.
     @State private var selectedMemberID: UUID? = nil
+    /// Menentukan apakah sheet pencarian buku sedang tampil.
     @State private var isShowingBookSearch = false
+    /// Teks pencarian judul buku pada sheet.
     @State private var searchText = ""
     
+    /// Daftar buku yang difilter berdasarkan `searchText`.
+    /// Jika kosong, menampilkan semua buku dari ViewModel.
     var filteredBooks: [Buku] {
         if searchText.isEmpty {
             return vm.books
@@ -22,6 +36,7 @@ struct LoanModalView: View {
             return vm.books.filter { $0.judul_buku.localizedCaseInsensitiveContains(searchText) }
         }
     }
+    /// Menampilkan judul buku yang dipilih atau placeholder.
     var selectedBookTitle: String {
         if let book = vm.books.first(where: { $0.id == selectedBookID }) {
             return book.judul_buku
@@ -29,6 +44,7 @@ struct LoanModalView: View {
             return "Pilih Buku..."
         }
     }
+    /// UI form peminjaman dan sheet pencarian buku.
     var body: some View {
         NavigationStack{
             Form{
@@ -64,8 +80,8 @@ struct LoanModalView: View {
                     Button {
                         Task{
                             if let idAnggota = selectedMemberID, !selectedBookID.isEmpty {
-                                await vm.addLoans(bukuId: selectedBookID, anggotaId: idAnggota)
-                                await vm.updateStock(bukuId: selectedBookID)
+                                await vm.addLoans(bukuId: selectedBookID, anggotaId: idAnggota) // 1) Simpan data peminjaman
+                                await vm.updateStock(bukuId: selectedBookID) // 2) Kurangi stok buku
                                 dismiss()
                             }
                         }
@@ -119,3 +135,4 @@ struct LoanModalView: View {
         }
     }
 }
+
