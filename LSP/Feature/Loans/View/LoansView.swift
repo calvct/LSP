@@ -7,22 +7,28 @@
 
 import SwiftUI
 
+/// Tampilan daftar peminjaman aktif. Menampilkan ringkasan peminjaman dan menyediakan aksi untuk menambah atau mengubah status.
 struct LoansView: View {
+    /// Menentukan apakah modal peminjaman baru ditampilkan.
     @State var isLoanModalPresented: Bool = false
-    @StateObject var vm : CatalogViewModel
+    /// View model peminjaman yang menyediakan data dan aksi terkait peminjaman.
+    @EnvironmentObject var vm: LoanViewModel
+    /// Item peminjaman yang dipilih untuk diedit statusnya.
     @State private var selectedItem: viewPeminjaman? = nil
-    
-    
-    
+    /// Hierarki tampilan utama yang mencakup empty state, daftar peminjaman, toolbar, sheet, dan refresh.
     var body: some View{
         NavigationStack{
             VStack{
+                // Empty state ketika belum ada peminjaman.
                 if(vm.viewPeminjaman.isEmpty){
                     Text("Silahkan Pilih Buku Untuk Dipinjam")
                 }
                 else{
+                    // Daftar peminjaman yang sedang berjalan.
                     ScrollView{
+                        // Render setiap item peminjaman.
                         ForEach(vm.viewPeminjaman){ pinjam in
+                            // Hanya tampilkan item dengan status "Dipinjam".
                             if(pinjam.status == "Dipinjam"){
                                 VStack (alignment: .leading){
                                     HStack{
@@ -64,11 +70,13 @@ struct LoansView: View {
                                     RoundedRectangle(cornerRadius: 8)
                                         .fill(Color(.systemGroupedBackground))
                                 )
+                                .padding(.horizontal)
                             }
                         }
                     }
                 }
             }
+            // Tombol untuk membuka modal peminjaman baru.
             .toolbar{
                 ToolbarItem(placement: .navigationBarTrailing){
                     Button(action:{
@@ -79,12 +87,17 @@ struct LoansView: View {
                 }
             }
             .navigationTitle(Text("Loans"))
+            // Modal untuk membuat peminjaman baru.
             .sheet(isPresented: $isLoanModalPresented){
-                LoanModalView(vm: vm)
+                LoanModalView()
+                    .environmentObject(vm)
             }
+            // Modal untuk mengedit status peminjaman terpilih.
             .sheet(item: $selectedItem) { item in
-                EditStatusView(loanItem: item, vm: vm)
+                EditStatusView(loanItem: item)
+                    .environmentObject(vm)
             }
+            // Tarik untuk menyegarkan data peminjaman dari backend.
             .refreshable(action: {
                 do{
                     try await vm.fetchViewPeminjaman()
@@ -98,3 +111,4 @@ struct LoansView: View {
         
     }
 }
+

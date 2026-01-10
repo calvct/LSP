@@ -7,20 +7,26 @@
 
 import SwiftUI
 
+/// Tampilan untuk mengubah status peminjaman buku (mis. menandai sebagai dikembalikan).
+/// Menampilkan detail ringkas buku dan peminjam, serta menyediakan aksi pembaruan status.
 struct EditStatusView: View {
-    // 1. Terima data item yang sedang diedit
+    /// Item peminjaman yang sedang diedit (hasil dari view/join backend).
     let loanItem: viewPeminjaman // Sesuaikan nama struct model Anda
     
-    // 2. Terima VM untuk eksekusi fungsi
-    @ObservedObject var vm: CatalogViewModel
+    /// View model peminjaman untuk mengeksekusi pembaruan status dan pembaruan stok.
+    @EnvironmentObject var vm: LoanViewModel
     
+    /// Aksi untuk menutup tampilan setelah operasi selesai.
     @Environment(\.dismiss) var dismiss
+    
+    /// Menandai status pemrosesan saat aksi pembaruan status sedang berlangsung.
     @State private var isLoading = false
     
+    /// Hierarki tampilan yang menampilkan informasi buku, status saat ini, dan tombol aksi untuk memperbarui status.
     var body: some View {
         NavigationStack {
             VStack(spacing: 24) {
-                // Info Buku
+                // Informasi ringkas buku dan peminjam.
                 VStack(spacing: 8) {
                     Image(systemName: "book.circle.fill")
                         .font(.system(size: 60))
@@ -38,7 +44,7 @@ struct EditStatusView: View {
                 
                 Divider()
                 
-                // Status Saat Ini
+                // Status peminjaman saat ini.
                 HStack {
                     Text("Status Saat Ini:")
                     Spacer()
@@ -52,12 +58,16 @@ struct EditStatusView: View {
                 
                 Spacer()
                 
-                // Tombol Aksi
+                // Aksi untuk menandai peminjaman sebagai dikembalikan (meningkatkan stok dan memperbarui status).
                 if loanItem.status != "Dikembalikan" {
                     Button(action: {
                         Task {
                             isLoading = true
+                            // 1) Perbarui status peminjaman menjadi "Dikembalikan".
                             await vm.updateStatusLoans(idPeminjaman: loanItem.id)
+                            // 2) Tambahkan kembali stok buku sebanyak 1.
+                            await vm.addJumlahBuku(judulBuku: loanItem.judul_buku, penulis: loanItem.penulis, jumlahBuku: 1)
+                            // 3) Tutup tampilan setelah selesai.
                             isLoading = false
                             dismiss()
                         }
@@ -85,13 +95,15 @@ struct EditStatusView: View {
             .padding()
             .navigationTitle("Edit Status")
             .navigationBarTitleDisplayMode(.inline)
+            // Tombol untuk menutup tampilan tanpa mengubah status.
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Tutup") { dismiss() }
                 }
             }
         }
-        // Supaya modalnya tidak full screen (setengah layar)
+        // Menampilkan modal setengah layar (medium detent).
         .presentationDetents([.medium])
     }
 }
+

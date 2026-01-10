@@ -10,6 +10,7 @@ import Supabase
 
 struct ContentView: View {
     @StateObject private var catalogVM = CatalogViewModel()
+    @StateObject private var loanVM = LoanViewModel()
     @State private var searchText: String = ""
     
     
@@ -21,27 +22,13 @@ struct ContentView: View {
                     
             }
             Tab("Loans", systemImage: "book.badge.plus"){
-                LoansView(vm: catalogVM)
+                LoansView()
+                    .environmentObject(loanVM)
             }
-//            Tab(role: .search){
-//                CatalogView()
-//                    .searchable(
-//                    text: $searchText,
-//                    placement: .navigationBarDrawer(displayMode: .always),
-//                    prompt: "Cari Buku"
-//                    )
-//            }
         }
-        .environmentObject(catalogVM)
         .task {
-            do{
-                try await catalogVM.fetchBooks()
-                try await catalogVM.fetchKategori()
-                try await catalogVM.fetchViewPeminjaman()
-                try await catalogVM.fetchAnggota()
-            }catch{
-                print(error)
-            }
+            await catalogVM.loadData()
+            await loanVM.loadData()
         }
     }
 }

@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct LoanModalView: View {
-    @ObservedObject var vm: CatalogViewModel
+    @EnvironmentObject var vm: LoanViewModel
     @Environment(\.dismiss) var dismiss
     @State private var selectedBookID: String = ""
     @State private var selectedMemberID: UUID? = nil
@@ -34,7 +34,7 @@ struct LoanModalView: View {
             Form{
                 Section("Siapa yang meminjam?") {
                     Picker("Nama Anggota", selection: $selectedMemberID) {
-                        Text("Pilih Anggota...").tag(0) // Default kosong
+                        Text("Pilih Anggota...").tag(nil as UUID?)
                         
                         ForEach(vm.anggota) { member in
                             Text(member.nama_lengkap).tag(member.id)
@@ -56,6 +56,9 @@ struct LoanModalView: View {
                     }
                 }
             }
+            .task {
+                try? await vm.fetchBooks()
+            }
             .toolbar{
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -69,6 +72,7 @@ struct LoanModalView: View {
                     } label: {
                         Image(systemName: "checkmark")
                     }
+                    .disabled(selectedBookID.isEmpty || selectedMemberID == nil)
                     
                 }
             }
@@ -115,4 +119,3 @@ struct LoanModalView: View {
         }
     }
 }
-

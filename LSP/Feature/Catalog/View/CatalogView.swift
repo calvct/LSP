@@ -6,49 +6,59 @@
 //
 
 import SwiftUI
+
+/// Tampilan katalog buku. Menampilkan daftar buku yang dapat difilter berdasarkan kategori dan kata kunci pencarian.
 struct CatalogView: View {
+    /// View model katalog yang menyediakan data buku dan kategori.
     @EnvironmentObject var vm: CatalogViewModel
+    /// Teks pencarian untuk memfilter judul buku.
     @State private var searchText: String = ""
-    
+    /// Status presentasi modal untuk menambahkan buku baru.
+    @State private var isBookModalPresented: Bool = false
+    /// Daftar buku yang sudah difilter berdasarkan kategori terpilih dan kata kunci `searchText`.
+    /// Hasil akhir diurutkan berdasarkan `judul_buku` secara ascending.
     var filteredItem : [Buku]{
+        let hasilFilter: [Buku]
         if searchText.isEmpty{
-            return vm.filteredBooks
+            hasilFilter =  vm.filteredBooks
         }
         else{
-            return vm.books.filter{
+            hasilFilter = vm.filteredBooks.filter{
                 book in
                 book.judul_buku.localizedCaseInsensitiveContains(searchText)
             }
         }
+        return hasilFilter.sorted { $0.judul_buku < $1.judul_buku }
     }
     
+    /// Hierarki tampilan utama katalog, termasuk filter kategori, daftar buku, pencarian, refresh, dan tombol tambah buku.
     var body: some View {
         NavigationStack {
-            ScrollView(.horizontal, showsIndicators: false){
-            HStack{
-                ForEach(vm.kategori){ category in
-                    Button(action:{
-                        withAnimation {
-                            vm.selectedKategoriId = category.id
-                        }
-                       
-                        
-                    }){
-                        Text(category.nama_kategori)
-                            .font(.headline)
-                            .foregroundStyle(vm.selectedKategoriId == category.id ? .white : .primary)
-                            .padding(8)
-                            .background(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(vm.selectedKategoriId == category.id ? Color.blue : Color.black.opacity(0.05))
-                            )
-                    }
-                }
-            }
-            .padding(.horizontal)
-        }
             ScrollView{
+                // Deretan tombol kategori (chips) untuk memilih filter kategori.
+                ScrollView(.horizontal, showsIndicators: false){
+                    HStack{
+                        ForEach(vm.kategori){ category in
+                            Button(action:{
+                                withAnimation {
+                                    vm.selectedKategoriId = category.id
+                                }
+                            }){
+                                Text(category.nama_kategori)
+                                    .font(.headline)
+                                    .foregroundStyle(vm.selectedKategoriId == category.id ? .white : .primary)
+                                    .padding(8)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 16)
+                                            .fill(vm.selectedKategoriId == category.id ? Color.blue : Color.black.opacity(0.05))
+                                    )
+                            }
+                        }
+                    }
+                    .padding(.horizontal)
+                }
                 
+                // Daftar buku hasil filter.
                 ForEach(filteredItem) { book in
                     HStack (spacing: 24){
                         Text("📕")
@@ -73,6 +83,12 @@ struct CatalogView: View {
                             else{
                                 Text("Habis")
                                     .font(Font.footnote.bold())
+                                    .padding(4)
+                                    .foregroundColor(.white)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 16)
+                                            .fill(Color.red)
+                                    )
                             }
                         }
                         Spacer()
@@ -87,13 +103,38 @@ struct CatalogView: View {
                     .padding(.horizontal)
                 }
             }
+            // Pencarian berdasarkan judul buku.
+            .searchable(text: $searchText, prompt: "Cari judul buku...")
             .navigationBarTitle("Katalog")
-            
+            // Memuat data buku saat tampilan muncul.
+            .task {
+                try? await vm.fetchBooks()
+            }
+            // Tarik untuk menyegarkan daftar buku.
+            .refreshable {
+                do{
+                    try await vm.fetchBooks()
+                }catch{
+                    debugPrint(error)
+                }
+            }
+            // Tombol untuk membuka modal tambah buku.
+            .toolbar{
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(action:{
+                        isBookModalPresented = true
+                    }){
+                        Image(systemName: "plus")
+                    }
+                }
+            }
+            // Modal untuk menambahkan buku baru.
+            .sheet(isPresented: $isBookModalPresented, content: {
+                AddBookView()
+                    .environmentObject(vm)
+            }
+            )
         }
     }
 }
-#Preview {
-    @EnvironmentObject var vm: CatalogViewModel
-    CatalogView()
-        .environmentObject(vm)
-}
+

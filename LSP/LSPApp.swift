@@ -9,12 +9,15 @@ import SwiftUI
 
 @main
 struct LSPApp: App {
-    @StateObject private var vm = CatalogViewModel()
+    @StateObject private var catalogVM = CatalogViewModel()
+    @StateObject private var loanVM = LoanViewModel()
+    
     var body: some Scene {
         
         WindowGroup {
             ContentView()
-                .environmentObject(vm)
+                .environmentObject(catalogVM)
+                .environmentObject(loanVM)
         }
     }
 }
