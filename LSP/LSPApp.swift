@@ -18,6 +18,7 @@ struct LSPApp: App {
             ContentView()
                 .environmentObject(catalogVM)
                 .environmentObject(loanVM)
+                .preferredColorScheme(.light)
         }
     }
 }

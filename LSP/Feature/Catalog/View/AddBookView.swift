@@ -67,6 +67,14 @@ struct AddBookView: View {
                     // Validasi sederhana: judul/penulis tidak boleh kosong dan kategori harus dipilih.
                     .disabled(namaBuku.isEmpty || namaPenulis.isEmpty || selectedIdCategory == 0)
                 }
+                ToolbarItem(placement: .cancellationAction) {
+                    Button{
+                        dismiss()
+                    }
+                    label:{
+                        Image(systemName:"xmark")
+                    }
+                }
             }
             .navigationTitle(Text("Tambah Buku"))
         }

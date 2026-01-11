@@ -89,7 +89,15 @@ struct LoanModalView: View {
                         Image(systemName: "checkmark")
                     }
                     .disabled(selectedBookID.isEmpty || selectedMemberID == nil)
-                    
+                   
+                }
+                ToolbarItem(placement: .cancellationAction) {
+                    Button{
+                        dismiss()
+                    }
+                    label:{
+                        Image(systemName:"xmark")
+                    }
                 }
             }
             .sheet(isPresented: $isShowingBookSearch) {
