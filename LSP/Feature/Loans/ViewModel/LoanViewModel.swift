@@ -66,7 +66,6 @@ class LoanViewModel: CatalogViewModel {
     func addLoans(bukuId: String, anggotaId: UUID) async  {
         /// Menghitung tanggal pengembalian (jatuh tempo) 7 hari dari tanggal hari ini.
         guard let tanggalKembali = Calendar.current.date(byAdding: .day, value: 7, to: Date()) else { return }
-
         let peminjaman = Peminjaman(
             id_anggota: anggotaId,
             id_buku: bukuId,
